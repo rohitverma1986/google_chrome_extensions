@@ -1,0 +1,20 @@
+{
+	"name" : "Chrome extension 1-GSDC",
+	"description" : "Copies data from one sheet to other by submittimg forms.",
+	"version" : "1.0",
+	"manifest_version" : 2 ,
+	"browser_action" : {
+		"default_popup" : "popup.html",
+		"default_icon" : "icons8-spider-40.png"
+	},
+	"content_scripts" : [
+		{
+			"matches" : ["https://docs.google.com/forms/d/e/*/viewform"],
+			"js" : ["js/form_filler.js"]
+		}
+	],
+	"background": {
+    "scripts": ["js/background.js"],
+    "persistent": false
+    }	
+}
