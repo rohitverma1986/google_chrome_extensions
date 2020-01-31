@@ -3,11 +3,21 @@ var data = [{
 	"q2" : "Option 1",
 	"q3" : "Option 1, Option 2",
 	"q4" : "Option 2",
-	"q6" : "25/01/2020 01:01:00"
-	
+	"q6" : "25/01/2020 01:01:00"	
 }
 ];
 
+data = [{
+	"Q1" : "Q1 value",
+	"Q2" : "Q2 value",
+	"Q3" : "Q3 value",
+	"date" : "1/30/2020 1:01:00",
+	"state" : "Jharkhand",
+	"gender" : "Female",
+	"allowances" : "TA, DA",
+	"Qa4" : "QA4 Value"
+}
+];
 
 //console.log(document.querySelectorAll("div[data-item-id]"));
 /*var inputFields = document.querySelectorAll("input[aria-label], input[data-item-id]");
@@ -41,7 +51,7 @@ function setDivs(columnIdx){
 		if(!isRadio(elems[0], columnIdx)){
 			if(!isCheckBox(elems[0], columnIdx)){
 				if(!isDropDown(elems[0], columnIdx)){
-					if(!isDate(elems[0], columnIdx)){
+					if(!isDateTime(elems[0], columnIdx)){
 						Logger.log("Some thing is unhandled here.");
 					}
 				}
@@ -55,7 +65,7 @@ function setDivs(columnIdx){
 Assuming label/parentNode will have sibling with input fields.
 */
 function isRadio(elems, columnIdx){
-	var sibling = elems.nextSibling;
+	var sibling = (elems)?elems.nextSibling:elems;
 	if(sibling){
 		//check role of sibling for radiogroup>radio or list>checkbox.
 		if(sibling && sibling.firstChild && 'radiogroup' === sibling.firstChild.getAttribute('role')){
@@ -73,7 +83,7 @@ function isRadio(elems, columnIdx){
 
 
 function isCheckBox(elems, columnIdx){
-	var sibling = elems.nextSibling;
+	var sibling = (elems)?elems.nextSibling:elems;
 	if(sibling){
 		//check role of sibling for radiogroup>radio or list>checkbox.		
 		var nephews = sibling.childNodes;
@@ -108,13 +118,13 @@ function isCheckBox(elems, columnIdx){
 
 
 function isDropDown(elems, columnIdx){
-	var sibling = elems.nextSibling;
+	var sibling = (elems)?elems.nextSibling:elems;
 	if(sibling){
 		//check role of sibling for radiogroup>radio or list>checkbox.				
 		var value = rowData[columnIdx];
 		
-		var toCheck = elems.parentNode.querySelectorAll('input');
-		if(toCheck && toCheck[0]){				
+		var toCheck = sibling.parentNode.querySelectorAll('input');
+		if(toCheck && toCheck.length == 1 && toCheck[0]){				
 			toCheck[0].value = value;
 			return true;
 		}	
@@ -123,3 +133,56 @@ function isDropDown(elems, columnIdx){
 	}
 	return false;
 }
+
+
+function isDateTime(elems, columnIdx){
+	var sibling = (elems)?elems.nextSibling:elems;
+	if(sibling){
+		var value = rowData[columnIdx];		
+		var counter = 0;		
+
+		var dateFields = sibling.querySelectorAll('input[type="Date"]');
+		if(dateFields && dateFields[0]){
+			var datePart = extractFormatDate(value); //format from MM/dd/yyyy to yyyy-MM-dd
+			dateFields[0].value=datePart;	
+			counter++;
+		}
+		var hourFields = sibling.querySelectorAll('input[type="number"][aria-label="Hour"]');
+		if(hourFields && hourFields[0]){
+			var timeHour = extractHour(value);
+			hourFields[0].value = timeHour;	
+			counter++;
+		}
+
+		var minuteFields = sibling.querySelectorAll('input[type="number"][aria-label="Minute"]');
+		if(minuteFields && minuteFields[0]){		
+			var timeMinute = extractMinute(value);
+			minuteFields[0].value = timeMinute;		
+			counter++;
+		}
+
+		return counter == 3;				
+	}else{
+		return isDateTime(elems.parentNode, columnIdx);
+	}
+	return false;	
+}
+
+
+function extractFormatDate(value){
+	var datePart = value.split(" ")[0].split("/");
+	var MM = (datePart[0].length==1?'0'+ datePart[0] : datePart[0]);
+	var dd = (datePart[1].length==1?'0'+ datePart[1] : datePart[1]);
+	return datePart[2] + "-" + MM + "-" + dd;
+}
+
+function extractHour(value){
+
+	return value.split(" ")[1].split(":")[0];
+	
+}
+
+function extractMinute(value){
+	return value.split(" ")[1].split(":")[1];
+}		
+		
