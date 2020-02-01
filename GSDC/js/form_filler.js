@@ -15,6 +15,7 @@ data = [{
 	"state" : "Jharkhand",
 	"gender" : "Female",
 	"allowances" : "TA, DA",
+	"TestDD2":"Option 2",
 	"Qa4" : "QA4 Value"
 }
 ];
@@ -47,12 +48,15 @@ function setInputText(columnIdx){
 
 function setDivs(columnIdx){
 	var elems = [...document.querySelectorAll('div[role="heading"]')]. filter(d=>d.innerHTML==columnIdx);
-	if(elems){
+	if(!elems || (elems && elems.length==0)){
+		elems = [...document.querySelectorAll('div[role="heading"]')]. filter(d=>d.innerHTML.indexOf(columnIdx + " ")==0);
+	}
+	if(elems && elems[0]){
 		if(!isRadio(elems[0], columnIdx)){
 			if(!isCheckBox(elems[0], columnIdx)){
 				if(!isDropDown(elems[0], columnIdx)){
 					if(!isDateTime(elems[0], columnIdx)){
-						Logger.log("Some thing is unhandled here.");
+						console.log("Some thing is unhandled here." + columnIdx);
 					}
 				}
 			}
@@ -86,27 +90,17 @@ function isCheckBox(elems, columnIdx){
 	var sibling = (elems)?elems.nextSibling:elems;
 	if(sibling){
 		//check role of sibling for radiogroup>radio or list>checkbox.		
-		var nephews = sibling.childNodes;
-		if(!nephews || 0 == nephews.length){
-			return isCheckBox(elems.nextSibling, columnIdx);
-		}
 		var foundCount = 0;
-		for (var i = nephews.length - 1; i >= 0; i--) {
-			var nephew = nephews[i];
-			if(nephew && 'listitem' === nephew.getAttribute('role')){
-				var values = rowData[columnIdx].split(',');			
-				var toCheck = nephew.querySelectorAll('div[role="checkbox"]');
-				for (var j = values.length - 1; j >= 0; j--) {
-					var value = values[j].trim();
-					if(toCheck && toCheck[0] && value === toCheck[0].getAttribute('aria-label')){
-						toCheck[0].click();					
-						foundCount++;
-					}
-				}				
-			}else {
-				return isCheckBox(elems.nextSibling, columnIdx);
+		var values = rowData[columnIdx].split(',');					
+		for (var j = values.length - 1; j >= 0; j--) {
+			var value = values[j].trim();
+			var toCheck = elems.parentNode.querySelectorAll('div[role="checkbox"][aria-label="' + value.trim() + '"]');
+			if(toCheck && toCheck[0]){
+				toCheck[0].click();					
+				foundCount++;
 			}
 		}
+
 		if(foundCount == rowData[columnIdx].split(',').length){
 			return true;
 		}
@@ -121,10 +115,17 @@ function isDropDown(elems, columnIdx){
 	var sibling = (elems)?elems.nextSibling:elems;
 	if(sibling){
 		//check role of sibling for radiogroup>radio or list>checkbox.				
-		var value = rowData[columnIdx];
-		
+		var value = rowData[columnIdx];		
 		var toCheck = sibling.parentNode.querySelectorAll('input');
-		if(toCheck && toCheck.length == 1 && toCheck[0]){				
+		if(toCheck && toCheck.length == 1 && toCheck[0]){							
+			var selectedOption = sibling.querySelectorAll('div[tabindex="0"]')[0];
+			selectedOption.classList.remove('isSelected');
+			selectedOption.setAttribute('tabindex', "-1");
+			selectedOption.setAttribute('aria-selected', "false");
+			var toSelectOption = sibling.querySelectorAll('div[data-value="'+value+'"]')[0];
+			toSelectOption.classList.add('isSelected');
+			toSelectOption.setAttribute('tabindex', "0");
+			toSelectOption.setAttribute('aria-selected', "true");
 			toCheck[0].value = value;
 			return true;
 		}	
@@ -160,8 +161,32 @@ function isDateTime(elems, columnIdx){
 			minuteFields[0].value = timeMinute;		
 			counter++;
 		}
-
-		return counter == 3;				
+		var yearField = [...sibling.querySelectorAll('input[type="hidden"]')].filter(node=> node.getAttribute("name").indexOf('year')>0);
+		if(yearField && yearField[0]){			
+			yearField[0].value = value.split(" ")[0].split("/")[2];
+			counter++;
+		}
+		var monthField = [...sibling.querySelectorAll('input[type="hidden"]')].filter(node=> node.getAttribute("name").indexOf('month')>0);
+		if(monthField && monthField[0]){			
+			monthField[0].value = value.split(" ")[0].split("/")[0];
+			counter++;
+		}
+		var dayField = [...sibling.querySelectorAll('input[type="hidden"]')].filter(node=> node.getAttribute("name").indexOf('day')>0);
+		if(dayField && dayField[0]){			
+			dayField[0].value = value.split(" ")[0].split("/")[1];
+			counter++;
+		}
+		var hourField = [...sibling.querySelectorAll('input[type="hidden"]')].filter(node=> node.getAttribute("name").indexOf('hour')>0);
+		if(hourField && hourField[0]){			
+			hourField[0].value = value.split(" ")[1].split(":")[0];
+			counter++;
+		}
+		var minuteField = [...sibling.querySelectorAll('input[type="hidden"]')].filter(node=> node.getAttribute("name").indexOf('minute')>0);
+		if(minuteField && minuteField[0]){			
+			minuteField[0].value = value.split(" ")[1].split(":")[1];
+			counter++;
+		}
+		return counter == 8;				
 	}else{
 		return isDateTime(elems.parentNode, columnIdx);
 	}
